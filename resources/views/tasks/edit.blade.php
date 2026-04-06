@@ -1,19 +1,20 @@
 @extends('layouts.app')
 
-@section('title', 'Create Task')
+@section('title', 'Edit Task')
 
 @section('content')
     <!-- Page Header -->
     <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Create Task</h1>
-        <p class="text-gray-600 mt-2">Create a new task and assign it to an employee</p>
+        <h1 class="text-3xl font-bold text-gray-900">Edit Task</h1>
+        <p class="text-gray-600 mt-2">Update task details and assignment</p>
     </div>
 
     <!-- Form -->
     <div class="max-w-2xl">
         <div class="bg-white border border-gray-200 rounded-md p-8">
-            <form method="POST" action="{{ route('tasks.store') }}">
+            <form method="POST" action="{{ route('tasks.update', $task) }}">
                 @csrf
+                @method('PUT')
 
                 <!-- Title -->
                 <div class="mb-6">
@@ -25,7 +26,7 @@
                         id="title"
                         name="title"
                         placeholder="e.g., Review project proposal"
-                        value="{{ old('title') }}"
+                        value="{{ old('title', $task->title) }}"
                         class="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-slate-500 focus:border-transparent outline-none transition"
                     />
                     @error('title')
@@ -44,7 +45,7 @@
                         placeholder="Add task details..."
                         rows="4"
                         class="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-slate-500 focus:border-transparent outline-none transition"
-                    >{{ old('description') }}</textarea>
+                    >{{ old('description', $task->description) }}</textarea>
                     @error('description')
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                     @enderror
@@ -62,7 +63,7 @@
                     >
                         <option value="">Select an employee</option>
                         @foreach($employees as $employee)
-                            <option value="{{ $employee->id }}" {{ old('assigned_to') == $employee->id ? 'selected' : '' }}>
+                            <option value="{{ $employee->id }}" {{ old('assigned_to', $task->assigned_to) == $employee->id ? 'selected' : '' }}>
                                 {{ $employee->name }}
                             </option>
                         @endforeach
@@ -82,7 +83,7 @@
                             type="date"
                             id="due_date"
                             name="due_date"
-                            value="{{ old('due_date') }}"
+                            value="{{ old('due_date', $task->due_date?->format('Y-m-d')) }}"
                             class="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-slate-500 focus:border-transparent outline-none transition"
                         />
                         @error('due_date')
@@ -101,9 +102,9 @@
                             class="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-slate-500 focus:border-transparent outline-none transition"
                         >
                             <option value="">Select priority</option>
-                            <option value="low" {{ old('priority') == 'low' ? 'selected' : '' }}>Low</option>
-                            <option value="medium" {{ old('priority') == 'medium' ? 'selected' : '' }}>Medium</option>
-                            <option value="high" {{ old('priority') == 'high' ? 'selected' : '' }}>High</option>
+                            <option value="low" {{ old('priority', $task->priority) == 'low' ? 'selected' : '' }}>Low</option>
+                            <option value="medium" {{ old('priority', $task->priority) == 'medium' ? 'selected' : '' }}>Medium</option>
+                            <option value="high" {{ old('priority', $task->priority) == 'high' ? 'selected' : '' }}>High</option>
                         </select>
                         @error('priority')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -117,7 +118,7 @@
                         type="submit"
                         class="px-6 py-2.5 bg-slate-800 text-white text-sm font-medium rounded-md hover:bg-slate-900 transition-colors"
                     >
-                        Create Task
+                        Update Task
                     </button>
                     <a
                         href="{{ route('tasks.index') }}"
@@ -130,4 +131,3 @@
         </div>
     </div>
 @endsection
-

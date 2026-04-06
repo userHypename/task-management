@@ -7,6 +7,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Hash;
 
 class User extends Authenticatable
 {
@@ -22,6 +23,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
     ];
 
     /**
@@ -46,9 +48,49 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    // Relationships
     public function tasks()
-{
-    return $this->hasMany(Task::class);
-}
+    {
+        return $this->hasMany(Task::class);
+    }
+
+    public function employee()
+    {
+        return $this->hasOne(Employee::class);
+    }
+
+    // Helper methods
+    public function isAdmin()
+    {
+        return $this->role === 'admin';
+    }
+
+    public function isManager()
+    {
+        return $this->role === 'manager';
+    }
+
+    public function isEmployee()
+    {
+        return !$this->isAdmin() && !$this->isManager();
+    }
+
+    /**
+     * Ensure plain passwords are hashed before saving (defensive).
+     */
+    protected function setPasswordAttribute($value)
+    {
+        if (empty($value)) {
+            $this->attributes['password'] = $value;
+            return;
+        }
+
+        // If the value is already a valid hash for the current algorithm,
+        // keep it. Otherwise, hash plaintext.
+        $this->attributes['password'] = Hash::needsRehash($value)
+            ? Hash::make($value)
+            : $value;
+    }
 
 }
