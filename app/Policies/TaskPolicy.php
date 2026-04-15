@@ -11,7 +11,10 @@ class TaskPolicy
      */
     public function view(User $user, Task $task)
     {
-        return $user->id === $task->user_id || $user->isAdmin();
+        // Owner, assignee or admin may view
+        return $user->id === $task->user_id
+            || $user->id === $task->assigned_to
+            || $user->isAdmin();
     }
 
     /**
@@ -19,7 +22,11 @@ class TaskPolicy
      */
     public function update(User $user, Task $task)
     {
-        return $user->id === $task->user_id || $user->isManager() || $user->isAdmin();
+        // Owner, assignee, manager or admin may update (controller enforces field-level restrictions)
+        return $user->id === $task->user_id
+            || $user->id === $task->assigned_to
+            || $user->isManager()
+            || $user->isAdmin();
     }
 
     /**
@@ -27,6 +34,9 @@ class TaskPolicy
      */
     public function delete(User $user, Task $task)
     {
-        return $user->id === $task->user_id || $user->isAdmin();
+        // Owner or admin may delete; allow manager if they created the task
+        return $user->id === $task->user_id
+            || $user->isAdmin()
+            || ($user->isManager() && $task->created_by === $user->id);
     }
 }

@@ -12,7 +12,8 @@ class EmployeeController extends Controller
     // Show all employees
     public function index()
     {
-        $employees = Employee::with('department', 'user')->get();
+        $perPage = request()->input('per_page', 15);
+        $employees = Employee::with('department', 'user')->latest()->paginate($perPage)->withQueryString();
         return view('employees.index', compact('employees'));
     }
 

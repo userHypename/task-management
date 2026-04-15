@@ -9,7 +9,8 @@ class DepartmentController extends Controller
 {
     public function index()
     {
-        $departments = Department::all();
+        $perPage = request()->input('per_page', 15);
+        $departments = Department::latest()->paginate($perPage)->withQueryString();
         return view('departments.index', compact('departments'));
     }
 

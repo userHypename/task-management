@@ -41,7 +41,8 @@ class DashboardController extends Controller
         ];
 
         $departments = Department::with(['employees.user.tasks'])->get();
-        $recent_tasks = Task::latest()->limit(10)->get();
+        $perPage = request()->input('per_page', 10);
+        $recent_tasks = Task::with(['assignedTo', 'project'])->latest()->paginate($perPage, ['*'], 'recent_tasks_page');
 
         return view('dashboards.admin', compact('stats', 'departments', 'recent_tasks'));
     }

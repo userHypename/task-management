@@ -14,13 +14,21 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ["Figtree", ...defaultTheme.fontFamily.sans],
+                // Single font family for consistency
+                sans: ["Inter", ...defaultTheme.fontFamily.sans],
             },
             colors: {
+                // Minimal color palette: primary, neutral, text
                 primary: {
-                    50: "#f0f9ff",
+                    DEFAULT: "#2563eb",
                     600: "#2563eb",
                     700: "#1d4ed8",
+                },
+                neutral: {
+                    DEFAULT: "#f3f4f6",
+                },
+                text: {
+                    DEFAULT: "#0f172a",
                 },
             },
         },

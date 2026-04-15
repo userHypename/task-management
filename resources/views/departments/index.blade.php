@@ -4,24 +4,16 @@
 
 @section('content')
     <!-- Page Header -->
-    <div class="mb-8 flex justify-between items-center">
+    <div class="mb-6 flex justify-between items-center">
         <div>
-            <h1 class="text-4xl font-bold text-gray-900 dark:text-white">Departments</h1>
-            <p class="text-gray-600 dark:text-gray-400 mt-2">Manage all departments in your organization</p>
+            <h1 class="page-title">Departments</h1>
+            <p class="body-text mt-2">Manage all departments in your organization</p>
         </div>
-        <a
-            href="{{ route('departments.create') }}"
-            class="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
-        >
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-            </svg>
-            Add Department
-        </a>
+        <a href="{{ route('departments.create') }}" class="btn btn-primary">Add Department</a>
     </div>
 
     <!-- Departments Table -->
-    <div class="bg-white rounded-lg shadow overflow-hidden dark:bg-gray-800">
+    <div class="card">
         @if($departments->count() > 0)
             <table class="w-full text-sm">
                 <thead class="bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">

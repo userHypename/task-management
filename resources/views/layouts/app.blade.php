@@ -7,9 +7,9 @@
 
     <title>@yield('title', 'Task Manager')</title>
 
-    <!-- Fonts -->
+    <!-- Fonts: single family for consistency -->
     <link rel="preconnect" href="https://fonts.bunny.net" />
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
 
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -21,8 +21,8 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 
-<body class="bg-gray-50 dark:bg-gray-900">
-    <div class="flex h-screen bg-gray-100">
+<body class="bg-neutral text-text font-sans">
+    <div class="flex h-screen bg-neutral">
         <!-- Sidebar -->
         @include('components.sidebar')
 
@@ -33,7 +33,7 @@
 
             <!-- Main content area -->
             <main class="flex-1 overflow-auto">
-                <div class="p-4 md:p-8">
+                <div class="p-4 md:p-8 max-w-7xl mx-auto">
                     <!-- Flash Messages -->
                     @if (session('success'))
                         <div

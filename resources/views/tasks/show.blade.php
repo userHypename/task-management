@@ -4,19 +4,19 @@
 
 @section('content')
     <!-- Page Header -->
-    <div class="mb-8">
-        <a href="{{ route('tasks.index') }}" class="text-slate-600 hover:text-slate-900 text-sm font-medium inline-flex items-center mb-4">
+    <div class="mb-6">
+        <a href="{{ route('tasks.index') }}" class="text-gray-600 hover:text-gray-900 text-sm font-medium inline-flex items-center mb-4">
             <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
             </svg>
             Back to Tasks
         </a>
-        <h1 class="text-3xl font-bold text-gray-900 mt-3">{{ $task->title }}</h1>
+        <h1 class="page-title mt-3">{{ $task->title }}</h1>
     </div>
 
     <!-- Task Details Card -->
     <div class="max-w-3xl">
-        <div class="bg-white border border-gray-200 rounded-md p-8">
+        <div class="card">
             <!-- Meta Information Row -->
             <div class="flex items-center justify-between pb-6 border-b border-gray-200 mb-6">
                 <!-- Status and Priority -->
@@ -77,7 +77,7 @@
             </div>
 
             <!-- Description -->
-            <div class="mb-8">
+            <div class="mb-6">
                 <p class="text-xs font-semibold text-gray-600 uppercase mb-3">Description</p>
                 <p class="text-gray-700 whitespace-pre-wrap leading-relaxed">
                     {{ $task->description ?? '—' }}
@@ -115,7 +115,7 @@
             </div>
 
             <!-- Timestamps -->
-            <div class="text-xs text-gray-500 mb-8">
+            <div class="text-xs text-gray-500 mb-6">
                 <p>Created {{ $task->created_at->format('M d, Y') }}</p>
                 <p>Last updated {{ $task->updated_at->diffForHumans() }}</p>
             </div>
@@ -150,6 +150,77 @@
                     Back
                 </a>
             </div>
+        </div>
+    </div>
+
+    <!-- Comments & Activity -->
+    <div class="max-w-3xl mt-6 space-y-6">
+        <div class="bg-white border border-gray-200 rounded-md p-6">
+            <h2 class="text-lg font-medium mb-4">Comments</h2>
+
+            @if(session('success'))
+                <div class="mb-4 text-sm text-green-700">{{ session('success') }}</div>
+            @endif
+
+            @auth
+                <form method="POST" action="{{ route('tasks.comments.store', $task) }}">
+                    @csrf
+                    <div>
+                        <label for="body" class="sr-only">Add a comment</label>
+                        <textarea id="body" name="body" rows="3" class="w-full border rounded-md p-2 @error('body') border-red-500 @enderror" placeholder="Write a comment...">{{ old('body') }}</textarea>
+                        @error('body')
+                            <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div class="mt-3">
+                        <button type="submit" class="px-3 py-1 bg-blue-600 text-white rounded-md">Add Comment</button>
+                    </div>
+                </form>
+            @endauth
+
+            <div class="mt-6 space-y-4">
+                @forelse($comments as $comment)
+                    <div class="border rounded-md p-3">
+                        <div class="flex justify-between items-start">
+                            <div class="text-sm text-gray-700">{{ $comment->body }}</div>
+                            <div>
+                                @if(Auth::user()->id === $comment->user_id || Auth::user()->isAdmin() || Auth::user()->isManager())
+                                    <form method="POST" action="{{ route('task-comments.destroy', $comment) }}" onsubmit="return confirm('Delete this comment?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-xs text-red-600">Delete</button>
+                                    </form>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-500 mt-2">By {{ $comment->user?->name ?? 'Unknown' }} · {{ $comment->created_at->diffForHumans() }}</div>
+                    </div>
+                @empty
+                    <p class="text-sm text-gray-500">No comments yet.</p>
+                @endforelse
+            </div>
+
+            <div class="mt-4">{{ $comments->links() }}</div>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-md p-6">
+            <h2 class="text-lg font-medium mb-4">Activity Log</h2>
+
+            <div class="space-y-3">
+                @forelse($activities as $activity)
+                    <div class="text-sm text-gray-700 border rounded-md p-3">
+                        <div class="font-medium">{{ ucfirst(str_replace('_', ' ', $activity->type)) }}</div>
+                        <div class="text-xs text-gray-500">By {{ $activity->user?->name ?? 'System' }} · {{ $activity->created_at->diffForHumans() }}</div>
+                        @if($activity->note)
+                            <div class="mt-2">{{ $activity->note }}</div>
+                        @endif
+                    </div>
+                @empty
+                    <p class="text-sm text-gray-500">No activities yet.</p>
+                @endforelse
+            </div>
+
+            <div class="mt-4">{{ $activities->links() }}</div>
         </div>
     </div>
 @endsection

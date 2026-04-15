@@ -3,16 +3,68 @@
 @tailwind utilities;
 
 @layer components {
+    :root {
+        --color-primary: #2563eb;
+        --color-neutral: #f3f4f6;
+        --color-text: #0f172a;
+
+        --space-sm: 0.5rem;
+        --space: 1rem;
+        --space-lg: 1.5rem;
+    }
+
+    /* Typography tokens */
+    .page-title {
+        @apply text-3xl font-semibold text-text mb-4;
+    }
+    .section-title {
+        @apply text-xl font-medium text-text mb-2;
+    }
+    .body-text {
+        @apply text-base text-text;
+    }
+    .small-text {
+        @apply text-sm text-gray-500;
+    }
+
+    /* Buttons: single consistent style */
+    .btn {
+        @apply inline-flex items-center justify-center px-4 py-2 rounded-md font-medium shadow-sm transition-colors;
+        height: 40px;
+    }
+
     .btn-primary {
-        @apply px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors;
+        background-color: var(--color-primary);
+        color: white;
     }
-    .btn-secondary {
-        @apply px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors;
+
+    .btn-primary:hover {
+        filter: brightness(0.95);
     }
-    .btn-danger {
-        @apply px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors;
+
+    .btn-ghost {
+        background-color: transparent;
+        color: var(--color-text);
+        border: 1px solid rgba(15, 23, 42, 0.06);
     }
-    .btn-success {
-        @apply px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors;
+
+    /* Card */
+    .card {
+        @apply bg-white rounded-lg shadow-sm p-4;
+    }
+
+    /* Form input */
+    .form-input {
+        @apply w-full px-3 py-2 rounded-md border border-gray-200 bg-white text-text;
+        height: 40px;
+    }
+
+    .form-label {
+        @apply block text-sm font-medium text-text mb-1;
+    }
+
+    /* Table row hover */
+    .table-row:hover {
+        background-color: #fbfdff;
     }
 }

@@ -72,6 +72,22 @@
                     @enderror
                 </div>
 
+                <!-- Project -->
+                <div class="mb-6">
+                    <label for="project_id" class="block text-sm font-semibold text-gray-900 mb-2">Project</label>
+                    <select id="project_id" name="project_id" class="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-slate-500 focus:border-transparent outline-none transition">
+                        <option value="">None</option>
+                        @if(!empty($projects))
+                            @foreach($projects as $p)
+                                <option value="{{ $p->id }}" {{ old('project_id') == $p->id ? 'selected' : '' }}>{{ $p->name }}</option>
+                            @endforeach
+                        @endif
+                    </select>
+                    @error('project_id')
+                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
                 <!-- Due Date -->
                 <div class="grid grid-cols-2 gap-6 mb-6">
                     <div>
@@ -112,16 +128,16 @@
                 </div>
 
                 <!-- Buttons -->
-                <div class="flex gap-3 pt-6 border-t border-gray-200">
+                <div class="flex flex-col sm:flex-row sm:justify-start gap-3 pt-6 border-t border-gray-200">
                     <button
                         type="submit"
-                        class="px-6 py-2.5 bg-slate-800 text-white text-sm font-medium rounded-md hover:bg-slate-900 transition-colors"
+                        class="btn btn-primary w-full sm:w-auto"
                     >
                         Create Task
                     </button>
                     <a
                         href="{{ route('tasks.index') }}"
-                        class="px-6 py-2.5 bg-gray-100 text-gray-900 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors"
+                        class="btn btn-ghost w-full sm:w-auto"
                     >
                         Cancel
                     </a>

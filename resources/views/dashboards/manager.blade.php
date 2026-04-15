@@ -4,11 +4,9 @@
 
 @section('content')
     <!-- Page Header -->
-    <div class="mb-8">
-        <h1 class="text-4xl font-bold text-gray-900 dark:text-white">Manager Dashboard</h1>
-        <p class="text-gray-600 dark:text-gray-400 mt-2">
-            Department: <span class="font-semibold">{{ auth()->user()->employee?->department?->name ?? 'No Department' }}</span>
-        </p>
+    <div class="mb-6">
+        <h1 class="page-title">Manager Dashboard</h1>
+        <p class="body-text mt-2">Department: <span class="font-semibold">{{ auth()->user()->employee?->department?->name ?? 'No Department' }}</span></p>
     </div>
 
     <!-- My Tasks Stats -->
@@ -75,7 +73,7 @@
         </div>
 
         <!-- Team Members Cards -->
-        <div class="mb-8">
+        <div class="mb-6">
             <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Team Members</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 @forelse($team_members as $member)
@@ -114,7 +112,8 @@
         <div>
             <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Department Tasks</h2>
             <div class="bg-white rounded-lg shadow overflow-hidden dark:bg-gray-800">
-                <table class="w-full text-sm">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm min-w-[700px]">
                     <thead class="bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
                         <tr>
                             <th class="px-6 py-3 text-left font-semibold text-gray-900 dark:text-white">Task</th>
@@ -122,6 +121,7 @@
                             <th class="px-6 py-3 text-left font-semibold text-gray-900 dark:text-white">Priority</th>
                             <th class="px-6 py-3 text-left font-semibold text-gray-900 dark:text-white">Status</th>
                             <th class="px-6 py-3 text-left font-semibold text-gray-900 dark:text-white">Due Date</th>
+                            <th class="px-6 py-3 text-left font-semibold text-gray-900 dark:text-white">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-600">
@@ -156,6 +156,29 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 text-gray-600 dark:text-gray-300">{{ $task->due_date?->format('M d, Y') ?? 'N/A' }}</td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-2">
+                                        @can('update', $task)
+                                            @if(!$task->is_completed)
+                                                <form method="POST" action="{{ route('tasks.updateStatus', $task) }}" class="inline-block">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <input type="hidden" name="is_completed" value="1">
+                                                    <button type="submit" class="btn btn-primary">Finish</button>
+                                                </form>
+                                            @else
+                                                <form method="POST" action="{{ route('tasks.updateStatus', $task) }}" class="inline-block">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <input type="hidden" name="is_completed" value="0">
+                                                    <button type="submit" class="btn btn-ghost">Reopen</button>
+                                                </form>
+                                            @endif
+
+                                            <a href="{{ route('tasks.edit', $task) }}" class="btn btn-ghost">Edit</a>
+                                        @endcan
+                                    </div>
+                                </td>
                             </tr>
                         @empty
                             <tr>

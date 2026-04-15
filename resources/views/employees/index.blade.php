@@ -4,24 +4,16 @@
 
 @section('content')
     <!-- Page Header -->
-    <div class="mb-8 flex justify-between items-center">
+    <div class="mb-6 flex justify-between items-center">
         <div>
-            <h1 class="text-4xl font-bold text-gray-900 dark:text-white">Employees</h1>
-            <p class="text-gray-600 dark:text-gray-400 mt-2">Manage all employees and their details</p>
+            <h1 class="page-title">Employees</h1>
+            <p class="body-text mt-2">Manage all employees and their details</p>
         </div>
-        <a
-            href="{{ route('employees.create') }}"
-            class="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
-        >
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-            </svg>
-            Add Employee
-        </a>
+        <a href="{{ route('employees.create') }}" class="btn btn-primary">Add Employee</a>
     </div>
 
     <!-- Employees Table -->
-    <div class="bg-white rounded-lg shadow overflow-hidden dark:bg-gray-800">
+    <div class="card">
         @if($employees->count() > 0)
             <table class="w-full text-sm">
                 <thead class="bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">

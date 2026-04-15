@@ -25,6 +25,7 @@
                 bgColor="bg-green-100"
                 icon="<svg class='w-6 h-6 text-green-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5.581m0 0H9m5.581 0a2 2 0 100-4 2 2 0 000 4zM9 7h.01M9 11h.01M9 15h.01'></path></svg>"
             />
+ 
             <x-stat-card
                 label="Total Employees"
                 :value="$stats['total_employees']"

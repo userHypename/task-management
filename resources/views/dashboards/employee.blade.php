@@ -4,18 +4,13 @@
 
 @section('content')
     <!-- Page Header -->
-    <div class="mb-8 flex justify-between items-center">
+    <div class="mb-6 flex justify-between items-center">
         <div>
-            <h1 class="text-4xl font-bold text-gray-900 dark:text-white">Welcome, {{ auth()->user()->name }}!</h1>
-            <p class="text-gray-600 dark:text-gray-400 mt-2">Here's your task summary for today.</p>
+            <h1 class="page-title">Welcome, {{ optional(auth()->user())->name ?? 'Guest' }}!</h1>
+            <p class="body-text mt-2">Here's your task summary for today.</p>
         </div>
-        <a
-            href="{{ route('tasks.create') }}"
-            class="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
-        >
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-            </svg>
+        <a href="{{ route('tasks.create') }}" class="btn btn-primary inline-flex items-center">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
             Create Task
         </a>
     </div>
@@ -26,25 +21,25 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <x-stat-card
                 label="Total Tasks"
-                :value="$stats['total_tasks']"
+                :value="$stats['total_tasks'] ?? 0"
                 bgColor="bg-blue-100"
                 icon="<svg class='w-6 h-6 text-blue-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'></path></svg>"
             />
             <x-stat-card
                 label="Completed"
-                :value="$stats['completed_tasks']"
+                :value="$stats['completed_tasks'] ?? 0"
                 bgColor="bg-green-100"
                 icon="<svg class='w-6 h-6 text-green-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M5 13l4 4L19 7'></path></svg>"
             />
             <x-stat-card
                 label="Pending"
-                :value="$stats['pending_tasks']"
+                :value="$stats['pending_tasks'] ?? 0"
                 bgColor="bg-yellow-100"
                 icon="<svg class='w-6 h-6 text-yellow-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'></path></svg>"
             />
             <x-stat-card
                 label="Overdue"
-                :value="$stats['overdue_tasks']"
+                :value="$stats['overdue_tasks'] ?? 0"
                 bgColor="bg-red-100"
                 icon="<svg class='w-6 h-6 text-red-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 9v2m0 4v2m0 4v2M7 9h10a2 2 0 012 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2V11a2 2 0 012-2z'></path></svg>"
             />
@@ -82,12 +77,10 @@
     <!-- My Tasks -->
     <div>
         <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">My Tasks</h2>
-        @if($my_tasks->count() > 0)
+        @if(!empty($my_tasks) && $my_tasks->count() > 0)
             <div class="space-y-3">
                 @foreach($my_tasks as $task)
-                    <div
-                        class="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow dark:bg-gray-800 flex items-start gap-4"
-                    >
+                    <div class="card flex items-start gap-4">
                         <!-- Checkbox -->
                         <div class="flex-shrink-0 mt-1">
                             <input
