@@ -8,16 +8,22 @@ use Illuminate\Database\Eloquent\Model;
 class Department extends Model
 {
     use HasFactory;
-    public function employees()
-{
-    return $this->hasMany(Employee::class);
-}
-//
-protected $fillable = ['name', 'description'];
 
-// Accessor for employee count
-public function getEmployeeCountAttribute()
-{
-    return $this->employees()->count();
+    protected $fillable = [
+        'name',
+        'description',
+        'employee_count',
+    ];
+
+    // Relationships
+    public function users()
+    {
+        return $this->hasMany(User::class);
+    }
+
+    public function employees()
+    {
+        return $this->hasMany(Employee::class);
+    }
 }
-}
+

@@ -11,23 +11,20 @@ return new class extends Migration
      */
     public function up(): void
     {
-       Schema::create('tasks', function (Blueprint $table) {
-    $table->id();
-
-    $table->foreignId('user_id')->constrained()->onDelete('cascade');
-
-    $table->string('title');
-    $table->text('description')->nullable();
-
-    $table->date('due_date')->nullable();
-
-    $table->enum('priority', ['low', 'medium', 'high'])->default('low');
-
-    $table->boolean('is_completed')->default(false);
-
-    $table->timestamps();
-});
-
+        Schema::create('tasks', function (Blueprint $table) {
+            $table->id();
+            $table->string('title', 200);
+            $table->text('description');
+            $table->foreignId('project_id')->constrained('projects')->cascadeOnDelete();
+            $table->foreignId('assigned_to')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('created_by')->constrained('users')->restrictOnDelete();
+            $table->enum('priority', ['low', 'medium', 'high', 'urgent'])->default('medium');
+            $table->enum('status', ['pending', 'in-progress', 'on-hold', 'completed', 'cancelled'])->default('pending');
+            $table->date('due_date');
+            $table->boolean('is_completed')->default(false);
+            $table->unsignedInteger('kanban_order')->default(0);
+            $table->timestamps();
+        });
     }
 
     /**

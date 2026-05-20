@@ -24,6 +24,11 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'department_id',
+        'position',
+        'avatar',
+        'phone',
+        'bio',
     ];
 
     /**
@@ -50,6 +55,36 @@ class User extends Authenticatable
     }
 
     // Relationships
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+    public function assignedTasks()
+    {
+        return $this->hasMany(Task::class, 'assigned_to');
+    }
+
+    public function createdTasks()
+    {
+        return $this->hasMany(Task::class, 'created_by');
+    }
+
+    public function projects()
+    {
+        return $this->hasMany(Project::class, 'manager_id');
+    }
+
+    public function taskComments()
+    {
+        return $this->hasMany(TaskComment::class);
+    }
+
+    public function taskActivities()
+    {
+        return $this->hasMany(TaskActivity::class);
+    }
+
     public function tasks()
     {
         return $this->hasMany(Task::class);

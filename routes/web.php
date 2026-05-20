@@ -1,33 +1,65 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\TaskController;
-use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\TaskController;
+use App\Http\Controllers\KanbanController;
+use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\DepartmentController;
-use App\Http\Controllers\TestController;
+use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return redirect('/dashboard');
+// Redirect root to dashboard
+Route::get('/', fn() => redirect('/dashboard'));
+
+// Auth routes (guest only)
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [AuthController::class, 'login']);
 });
 
-Route::get('/test', [TestController::class, 'test']);
-
+// Protected routes (auth required)
 Route::middleware('auth')->group(function () {
+    // Logout
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+    // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    Route::resource('tasks', TaskController::class);
+    // Tasks
+    Route::get('/tasks', [TaskController::class, 'index'])->name('tasks.index');
+    Route::get('/tasks/create', [TaskController::class, 'create'])->name('tasks.create')->middleware('role:admin,manager');
+    Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store')->middleware('role:admin,manager');
+    Route::get('/tasks/{task}', [TaskController::class, 'show'])->name('tasks.show');
+    Route::get('/tasks/{task}/edit', [TaskController::class, 'edit'])->name('tasks.edit')->middleware('role:admin,manager');
+    Route::put('/tasks/{task}', [TaskController::class, 'update'])->name('tasks.update')->middleware('role:admin,manager');
+    Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy')->middleware('role:admin,manager');
 
-    // Employee routes (only admins/managers can access)
-    Route::middleware(['role:admin,manager'])->group(function () {
-        Route::resource('employees', EmployeeController::class);
-        Route::resource('departments', DepartmentController::class);
+    // Kanban
+    Route::get('/kanban', [KanbanController::class, 'index'])->name('kanban.index');
+    Route::patch('/kanban/{task}/status', [KanbanController::class, 'updateStatus'])->name('kanban.updateStatus');
+
+    // Admin/Manager Routes
+    Route::middleware('role:admin,manager')->group(function () {
+        Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
+        Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
+        Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+        Route::get('/employees', [EmployeeController::class, 'index'])->name('employees.index');
     });
 
+    // Admin Only Routes
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/departments', [DepartmentController::class, 'index'])->name('departments.index');
+    });
+
+    // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+// Include auth routes for password reset, etc
 require __DIR__.'/auth.php';
+

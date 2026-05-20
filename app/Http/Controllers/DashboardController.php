@@ -1,11 +1,9 @@
 <?php
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Task;
-use App\Models\Department;
-use App\Models\User;
-use App\Models\Employee;
+use App\Models\Project;
+use App\Models\TaskActivity;
 
 class DashboardController extends Controller
 {
@@ -13,93 +11,69 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
 
-        // Admin Dashboard
-        if ($user->isAdmin()) {
-            return $this->adminDashboard($user);
+        if ($user->isEmployee()) {
+            return $this->employeeDashboard($user);
         }
 
-        // Manager Dashboard
-        if ($user->isManager()) {
-            return $this->managerDashboard($user);
-        }
-
-        // Employee Dashboard (default)
-        return $this->employeeDashboard($user);
-    }
-
-    private function adminDashboard($user)
-    {
-        $stats = [
-            'total_users' => User::count(),
-            'total_departments' => Department::count(),
-            'total_employees' => Employee::count(),
-            'total_tasks' => Task::count(),
-            'completed_tasks' => Task::completed()->count(),
-            'pending_tasks' => Task::pending()->count(),
-            'overdue_tasks' => Task::where('due_date', '<', now())->pending()->count(),
-            'high_priority' => Task::highPriority()->pending()->count(),
-        ];
-
-        $departments = Department::with(['employees.user.tasks'])->get();
-        $recent_tasks = Task::latest()->limit(10)->get();
-
-        return view('dashboards.admin', compact('stats', 'departments', 'recent_tasks'));
-    }
-
-    private function managerDashboard($user)
-    {
-        $stats = [
-            'total_tasks' => $user->tasks()->count(),
-            'completed_tasks' => $user->tasks()->completed()->count(),
-            'pending_tasks' => $user->tasks()->pending()->count(),
-            'overdue_tasks' => $user->tasks()->where('due_date', '<', now())->pending()->count(),
-            'high_priority' => $user->tasks()->highPriority()->pending()->count(),
-            'department_tasks' => null,
-            'team_members' => 0,
-            'dept_completed' => 0,
-            'dept_pending' => 0,
-        ];
-
-        $team_members = collect();
-        $department_tasks = collect();
-
-        // If manager has a department, get department stats
-        if ($user->employee && $user->employee->department) {
-            $department = $user->employee->department;
-            
-            // Get team members (employees in same department)
-            $team_members = User::whereHas('employee', function($q) use ($department) {
-                $q->where('department_id', $department->id);
-            })->where('id', '!=', $user->id)->get();
-
-            // Get department tasks
-            $department_tasks = Task::whereHas('user.employee', function($q) use ($department) {
-                $q->where('department_id', $department->id);
-            })->get();
-
-            $stats['department_tasks'] = $department_tasks->count();
-            $stats['team_members'] = $team_members->count() + 1; // Include manager
-            $stats['dept_completed'] = $department_tasks->where('is_completed', true)->count();
-            $stats['dept_pending'] = $department_tasks->where('is_completed', false)->count();
-        }
-
-        return view('dashboards.manager', compact('stats', 'team_members', 'department_tasks'));
+        return $this->managerDashboard($user);
     }
 
     private function employeeDashboard($user)
     {
-        $my_tasks = $user->tasks()->latest()->get();
+        // Get tasks assigned to or created by the user
+        $assignedTasks = $user->assignedTasks()->with('project')->latest()->limit(4)->get();
+        $createdTasks = $user->createdTasks()->with('project')->latest()->limit(4)->get();
 
         $stats = [
-            'total_tasks' => $user->tasks()->count(),
-            'completed_tasks' => $user->tasks()->completed()->count(),
-            'pending_tasks' => $user->tasks()->pending()->count(),
-            'overdue_tasks' => $user->tasks()->where('due_date', '<', now())->pending()->count(),
-            'high_priority' => $user->tasks()->highPriority()->pending()->count(),
-            'medium_priority' => $user->tasks()->where('priority', 'medium')->pending()->count(),
-            'low_priority' => $user->tasks()->where('priority', 'low')->pending()->count(),
+            'total' => Task::where('assigned_to', $user->id)->orWhere('created_by', $user->id)->count(),
+            'completed' => Task::where('assigned_to', $user->id)->where('is_completed', true)->count(),
+            'pending' => Task::where('assigned_to', $user->id)->where('status', 'pending')->count(),
+            'overdue' => Task::where('assigned_to', $user->id)
+                ->where('due_date', '<', now())
+                ->where('is_completed', false)
+                ->count(),
         ];
 
-        return view('dashboards.employee', compact('stats', 'my_tasks'));
+        return view('dashboard.employee', compact('stats', 'assignedTasks', 'createdTasks'));
+    }
+
+    private function managerDashboard($user)
+    {
+        // Get user's projects and associated tasks
+        if (!$user->isAdmin()) {
+            $projects = Project::where('manager_id', $user->id)->with('tasks')->get();
+        } else {
+            $projects = Project::with('tasks')->get();
+        }
+
+        $activeProjects = $projects->where('status', 'active');
+        $totalProjects = $projects->count();
+
+        // Stats
+        $allTasks = collect();
+        foreach ($projects as $project) {
+            $allTasks = $allTasks->merge($project->tasks);
+        }
+
+        $stats = [
+            'total' => $allTasks->count(),
+            'completed' => $allTasks->where('is_completed', true)->count(),
+            'pending' => $allTasks->where('status', 'pending')->count(),
+            'overdue' => $allTasks->where('status', '!=', 'completed')
+                ->filter(fn($t) => $t->due_date && $t->due_date < now())
+                ->count(),
+            'active_projects' => $activeProjects->count(),
+            'total_projects' => $totalProjects,
+        ];
+
+        // Recent activities
+        $recentActivities = TaskActivity::latest()->limit(10)->with('task', 'user')->get();
+        $recentlyCompleted = Task::where('is_completed', true)
+            ->whereIn('project_id', $projects->pluck('id'))
+            ->latest()
+            ->limit(5)
+            ->get();
+
+        return view('dashboard.manager', compact('stats', 'recentActivities', 'recentlyCompleted', 'projects'));
     }
 }

@@ -26,9 +26,9 @@ class TaskController extends Controller
 
         // Base query
         if ($user->isManager() || $user->isAdmin()) {
-            $tasksQuery = Task::with(['createdBy', 'assignedTo']);
+            $tasksQuery = Task::with(['creator', 'assignedTo']);
         } else {
-            $tasksQuery = Task::with(['createdBy', 'assignedTo'])->assignedTo($user->id);
+            $tasksQuery = Task::with(['creator', 'assignedTo'])->assignedTo($user->id);
         }
 
         // Search
@@ -60,10 +60,11 @@ class TaskController extends Controller
             abort(403, 'Unauthorized: Only managers can create tasks');
         }
 
-        // Get all employees for dropdown
-        $employees = User::where('role', 'employee')->get();
+        // Get all projects and users for dropdowns
+        $projects = \App\Models\Project::all();
+        $users = User::where('role', 'employee')->get();
         
-        return view('tasks.create', compact('employees'));
+        return view('tasks.create', compact('projects', 'users'));
     }
 
     /**
@@ -128,10 +129,11 @@ class TaskController extends Controller
             abort(403, 'Unauthorized: Only managers can edit tasks');
         }
 
-        // Get all employees for dropdown
-        $employees = User::where('role', 'employee')->get();
+        // Get all projects and users for dropdowns
+        $projects = \App\Models\Project::all();
+        $users = User::where('role', 'employee')->get();
         
-        return view('tasks.edit', compact('task', 'employees'));
+        return view('tasks.create', compact('task', 'projects', 'users'));
     }
 
     /**
