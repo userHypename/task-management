@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Models\Task;
+use App\Models\User;
 use App\Policies\TaskPolicy;
+use App\Policies\UserPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -22,6 +24,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        $this->registerPolicies();
+    }
+
+    /**
+     * Register authorization policies
+     */
+    protected function registerPolicies(): void
+    {
+        Gate::policy(Task::class, TaskPolicy::class);
+        Gate::policy(User::class, UserPolicy::class);
     }
 }

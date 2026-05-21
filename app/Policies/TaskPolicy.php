@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Policies;
 
 use App\Models\Task;
@@ -7,26 +8,99 @@ use App\Models\User;
 class TaskPolicy
 {
     /**
-     * View a task - owner or admin
+     * Determine if the user can view any tasks.
      */
-    public function view(User $user, Task $task)
+    public function viewAny(User $user): bool
     {
-        return $user->id === $task->user_id || $user->isAdmin();
+        return true; // All authenticated users can list tasks (filtered by role)
     }
 
     /**
-     * Update a task - owner, manager, or admin
+     * Determine if the user can view the model.
      */
-    public function update(User $user, Task $task)
+    public function view(User $user, Task $task): bool
     {
-        return $user->id === $task->user_id || $user->isManager() || $user->isAdmin();
+        // Admin can view any task
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        // Manager can view tasks they created
+        if ($user->isManager() && $task->created_by === $user->id) {
+            return true;
+        }
+
+        // Employee can view tasks assigned to them (many-to-many)
+        if ($user->isEmployee() && $task->assignedUsers()->where('user_id', $user->id)->exists()) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
-     * Delete a task - owner or admin
+     * Determine if the user can create models.
      */
-    public function delete(User $user, Task $task)
+    public function create(User $user): bool
     {
-        return $user->id === $task->user_id || $user->isAdmin();
+        return $user->isManager() || $user->isAdmin();
+    }
+
+    /**
+     * Determine if the user can update the model.
+     */
+    public function update(User $user, Task $task): bool
+    {
+        // Admin can update any task
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        // Manager can update tasks they created
+        if ($user->isManager() && $task->created_by === $user->id) {
+            return true;
+        }
+
+        // Employee can update status if task is assigned to them
+        if ($user->isEmployee() && $task->assignedUsers()->where('user_id', $user->id)->exists()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Determine if the user can delete the model.
+     */
+    public function delete(User $user, Task $task): bool
+    {
+        // Admin can delete any task
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        // Manager can delete tasks they created (if not completed)
+        if ($user->isManager() && $task->created_by === $user->id && !$task->is_completed) {
+            return true;
+        }
+
+        // Employees cannot delete tasks
+        return false;
+    }
+
+    /**
+     * Determine if the user can restore the model.
+     */
+    public function restore(User $user, Task $task): bool
+    {
+        return $user->isAdmin() || ($user->isManager() && $task->created_by === $user->id);
+    }
+
+    /**
+     * Determine if the user can permanently delete the model.
+     */
+    public function forceDelete(User $user, Task $task): bool
+    {
+        return $user->isAdmin();
     }
 }

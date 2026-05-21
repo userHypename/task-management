@@ -145,22 +145,7 @@
                     </button>
                 </form>
 
-                <!-- Demo Credentials -->
-                <div class="mt-8 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-lg">
-                    <p class="text-sm font-semibold text-gray-900 mb-3">Demo Credentials</p>
-                    <div class="space-y-2 text-xs">
-                        <div class="flex justify-between">
-                            <span class="text-gray-600"><strong>Admin:</strong> admin@company.com</span>
-                            <span class="text-gray-500">/ admin123</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600"><strong>Manager:</strong> sarah.j@company.com</span>
-                            <span class="text-gray-500">/ manager123</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600"><strong>Employee:</strong> emma.w@company.com</span>
-                            <span class="text-gray-500">/ employee123</span>
-                        </div>
+              
                     </div>
                 </div>
             </div>

@@ -20,7 +20,7 @@
                     <label for="name" class="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
                         Department Name <span class="text-red-600">*</span>
                     </label>
-                    <input
+                        <input
                         type="text"
                         id="name"
                         name="name"

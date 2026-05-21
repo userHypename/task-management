@@ -4,46 +4,49 @@ namespace App\Http\Controllers;
 
 use App\Models\Task;
 use App\Models\User;
+use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 
 class TaskController extends Controller
 {
     /**
      * Show all tasks with role-based filtering
-     * Manager: sees all tasks
-     * Employee: sees only assigned tasks
      */
     public function index()
     {
         $user = Auth::user();
         
-        // Read filters from request
         $query = request()->input('q');
-        $status = request()->input('status'); // expected: pending|completed|all
-        $perPage = 10; // tasks per page
+        $status = request()->input('status');
+        $perPage = 10;
 
-        // Base query
-        if ($user->isManager() || $user->isAdmin()) {
-            $tasksQuery = Task::with(['creator', 'assignedTo']);
+        // Use role checks directly since helper methods might not be available
+        if ($user->role === 'admin') {
+            $tasksQuery = Task::with(['creator', 'assignedTo', 'assignedUsers', 'project']);
+        } elseif ($user->role === 'manager') {
+            $tasksQuery = Task::where('created_by', $user->id)
+                             ->with(['creator', 'assignedTo', 'assignedUsers', 'project']);
         } else {
-            $tasksQuery = Task::with(['creator', 'assignedTo'])->assignedTo($user->id);
+            // Employee - see tasks assigned to them
+            $tasksQuery = Task::where('assigned_to', $user->id)
+                ->orWhereHas('assignedUsers', function($q) use ($user) {
+                    $q->where('user_id', $user->id);
+                })
+                ->with(['creator', 'assignedTo', 'assignedUsers', 'project']);
         }
 
-        // Search
         if ($query) {
             $tasksQuery->where('title', 'like', '%' . $query . '%');
         }
 
-        // Filter by status
         if ($status === 'completed') {
             $tasksQuery->where('is_completed', true);
         } elseif ($status === 'pending') {
             $tasksQuery->where('is_completed', false);
         }
 
-        // Order and paginate
         $tasks = $tasksQuery->latest()->paginate($perPage)->withQueryString();
 
         return view('tasks.index', compact('tasks', 'query', 'status'));
@@ -51,54 +54,86 @@ class TaskController extends Controller
 
     /**
      * Show create form
-     * Only managers can create tasks
      */
     public function create()
     {
-        // Only managers and admins can create tasks
-        if (!Auth::user()->isManager() && !Auth::user()->isAdmin()) {
+        $user = Auth::user();
+        
+        if ($user->role !== 'manager' && $user->role !== 'admin') {
             abort(403, 'Unauthorized: Only managers can create tasks');
         }
 
-        // Get all projects and users for dropdowns
-        $projects = \App\Models\Project::all();
-        $users = User::where('role', 'employee')->get();
+        $projects = Project::all();
+        $employees = User::where('role', 'employee')
+            ->where('account_status', 'active')
+            ->get();
         
-        return view('tasks.create', compact('projects', 'users'));
+        return view('tasks.create', compact('projects', 'employees'));
     }
 
     /**
-     * Store new task
+     * Store new task with multiple employee assignments
      */
     public function store(Request $request)
     {
-        // Only managers can create tasks
-        if (!Auth::user()->isManager() && !Auth::user()->isAdmin()) {
+        $user = Auth::user();
+        
+        if ($user->role !== 'manager' && $user->role !== 'admin') {
             abort(403, 'Unauthorized: Only managers can create tasks');
         }
 
-        $request->validate([
+        $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'due_date' => 'nullable|date|after_or_equal:today',
-            'priority' => 'required|in:low,medium,high',
-            'assigned_to' => [
-                'nullable',
-                Rule::exists('users', 'id')->where('role', 'employee'),
-            ],
+            'project_id' => 'required|exists:projects,id',
+            'due_date' => 'nullable|date',
+            'priority' => 'required|in:low,medium,high,urgent',
+            'status' => 'required|in:pending,in-progress,on-hold,completed,cancelled',
+            'assigned_users' => 'required|array|min:1',
+            'assigned_users.*' => 'exists:users,id',
         ]);
 
-        Task::create([
-            'created_by' => Auth::id(),
-            'user_id' => Auth::id(), // Keep for backward compatibility
-            'title' => $request->title,
-            'description' => $request->description,
-            'due_date' => $request->due_date,
-            'priority' => $request->priority,
-            'assigned_to' => $request->assigned_to,
-        ]);
+        DB::beginTransaction();
+        
+        try {
+            // Create the task - NO user_id field
+            $task = Task::create([
+                'created_by' => Auth::id(),
+                'title' => $validated['title'],
+                'description' => $validated['description'],
+                'project_id' => $validated['project_id'],
+                'due_date' => $validated['due_date'],
+                'priority' => $validated['priority'],
+                'status' => $validated['status'],
+                'is_completed' => $validated['status'] === 'completed',
+            ]);
 
-        return redirect()->route('tasks.index')->with('success', 'Task created successfully!');
+            // Assign task to multiple employees
+            if (!empty($validated['assigned_users'])) {
+                $attachData = [];
+                foreach ($validated['assigned_users'] as $employeeId) {
+                    $attachData[$employeeId] = [
+                        'status' => 'pending',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+                $task->assignedUsers()->attach($attachData);
+                
+                // Set legacy assigned_to field for backward compatibility
+                $task->assigned_to = $validated['assigned_users'][0];
+                $task->save();
+            }
+
+            DB::commit();
+            
+            return redirect()->route('tasks.index')
+                ->with('success', 'Task created and assigned to ' . count($validated['assigned_users']) . ' employee(s)!');
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Failed to create task: ' . $e->getMessage())->withInput();
+        }
     }
 
     /**
@@ -108,95 +143,232 @@ class TaskController extends Controller
     {
         $user = Auth::user();
         
-        // Employee can only view tasks assigned to them
-        if ($user->isEmployee() && $task->assigned_to !== $user->id) {
-            abort(403, 'Unauthorized: You can only view tasks assigned to you');
+        // Authorization check using role strings
+        if ($user->role === 'employee') {
+            $isAssigned = $task->assigned_to === $user->id || 
+                          $task->assignedUsers()->where('user_id', $user->id)->exists();
+            if (!$isAssigned) {
+                abort(403, 'Unauthorized: You can only view tasks assigned to you');
+            }
+        } elseif ($user->role === 'manager' && $task->created_by !== $user->id && $user->role !== 'admin') {
+            abort(403, 'Unauthorized: You can only view tasks you created');
         }
 
-        return view('tasks.show', compact('task'));
+        $task->load(['creator', 'assignedUsers', 'project', 'comments.user', 'activities.user']);
+        
+        // Get current user's assignment data if employee
+        $userAssignment = null;
+        if ($user->role === 'employee') {
+            $userAssignment = $task->assignedUsers()->where('user_id', $user->id)->first();
+            if (!$userAssignment && $task->assigned_to === $user->id) {
+                // Create a virtual assignment object
+                $userAssignment = new \stdClass();
+                $userAssignment->pivot = new \stdClass();
+                $userAssignment->pivot->status = $task->status;
+                $userAssignment->pivot->completion_notes = null;
+            }
+        }
+
+        return view('tasks.show', compact('task', 'userAssignment'));
     }
 
     /**
      * Show edit form
-     * Only manager who created it or admin can edit
      */
     public function edit(Task $task)
     {
         $user = Auth::user();
         
-        // Employees cannot edit tasks; managers and admins may
-        if ($user->isEmployee()) {
+        if ($user->role === 'employee') {
             abort(403, 'Unauthorized: Only managers can edit tasks');
         }
 
-        // Get all projects and users for dropdowns
-        $projects = \App\Models\Project::all();
-        $users = User::where('role', 'employee')->get();
+        if ($user->role === 'manager' && $task->created_by !== $user->id) {
+            abort(403, 'Unauthorized: You can only edit tasks you created');
+        }
+
+        $projects = Project::all();
+        $employees = User::where('role', 'employee')
+            ->where('account_status', 'active')
+            ->get();
+        $currentAssignees = $task->assignedUsers()->pluck('user_id')->toArray();
         
-        return view('tasks.create', compact('task', 'projects', 'users'));
+        return view('tasks.edit', compact('task', 'projects', 'employees', 'currentAssignees'));
     }
 
     /**
-     * Update task in database
+     * Update task
      */
     public function update(Request $request, Task $task)
     {
         $user = Auth::user();
         
-        // Allow employees to update only is_completed if task is assigned to them
-        if ($user->isEmployee()) {
-            if ($task->assigned_to !== $user->id) {
-                abort(403, 'Unauthorized: You can only update tasks assigned to you');
+        // Employee updating their own task status
+        if ($user->role === 'employee') {
+            $isAssigned = $task->assigned_to === $user->id || 
+                          $task->assignedUsers()->where('user_id', $user->id)->exists();
+            if (!$isAssigned) {
+                abort(403, 'Unauthorized');
             }
             
-            $request->validate([
-                'is_completed' => 'boolean',
+            $validated = $request->validate([
+                'pivot_status' => 'required|in:pending,in-progress,completed',
+                'completion_notes' => 'nullable|string',
             ]);
             
-            $task->update(['is_completed' => $request->boolean('is_completed')]);
-            return redirect()->route('tasks.index')->with('success', 'Task status updated!');
+            $updateData = [
+                'status' => $validated['pivot_status'],
+                'updated_at' => now(),
+            ];
+            
+            if ($validated['pivot_status'] === 'in-progress') {
+                $updateData['started_at'] = now();
+            }
+            
+            if ($validated['pivot_status'] === 'completed') {
+                $updateData['completed_at'] = now();
+            }
+            
+            if ($validated['completion_notes']) {
+                $updateData['completion_notes'] = $validated['completion_notes'];
+            }
+            
+            // Update the pivot table if assignment exists there
+            if ($task->assignedUsers()->where('user_id', $user->id)->exists()) {
+                $task->assignedUsers()->updateExistingPivot($user->id, $updateData);
+            } else {
+                // Update the task directly if using legacy assigned_to
+                $task->update([
+                    'status' => $validated['pivot_status'],
+                    'is_completed' => $validated['pivot_status'] === 'completed',
+                ]);
+            }
+            
+            // Check if all assigned employees completed
+            $allCompleted = $task->assignedUsers()->count() > 0 && 
+                            $task->assignedUsers()->wherePivot('status', '!=', 'completed')->count() === 0;
+            
+            if ($allCompleted && !$task->is_completed) {
+                $task->update([
+                    'is_completed' => true,
+                    'status' => 'completed',
+                ]);
+            }
+            
+            return redirect()->route('tasks.show', $task)
+                ->with('success', 'Task status updated successfully!');
+        }
+        
+        // Manager/Admin updating task
+        if ($user->role !== 'manager' && $user->role !== 'admin') {
+            abort(403);
         }
 
-        // Manager/Admin can update everything
-        if (!($user->isManager() || $user->isAdmin())) {
-            abort(403, 'Unauthorized: You can only edit tasks you created');
+        if ($user->role === 'manager' && $task->created_by !== $user->id) {
+            abort(403);
         }
 
-        $request->validate([
+        $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'project_id' => 'required|exists:projects,id',
             'due_date' => 'nullable|date',
-            'priority' => 'required|in:low,medium,high',
-            'is_completed' => 'boolean',
-            'assigned_to' => [
-                'nullable',
-                Rule::exists('users', 'id')->where('role', 'employee'),
-            ],
+            'priority' => 'required|in:low,medium,high,urgent',
+            'status' => 'required|in:pending,in-progress,on-hold,completed,cancelled',
+            'assigned_users' => 'nullable|array',
+            'assigned_users.*' => 'exists:users,id',
         ]);
 
-        $data = $request->only([
-            'title', 'description', 'due_date', 'priority', 'is_completed', 'assigned_to'
+        $task->update([
+            'title' => $validated['title'],
+            'description' => $validated['description'],
+            'project_id' => $validated['project_id'],
+            'due_date' => $validated['due_date'],
+            'priority' => $validated['priority'],
+            'status' => $validated['status'],
+            'is_completed' => $validated['status'] === 'completed',
         ]);
-        
-        $task->update($data);
 
-        return redirect()->route('tasks.index')->with('success', 'Task updated successfully!');
+        // Update assignments if provided
+        if (isset($validated['assigned_users']) && !empty($validated['assigned_users'])) {
+            $syncData = [];
+            foreach ($validated['assigned_users'] as $employeeId) {
+                $syncData[$employeeId] = ['status' => 'pending', 'updated_at' => now()];
+            }
+            $task->assignedUsers()->sync($syncData);
+            
+            $task->assigned_to = $validated['assigned_users'][0];
+            $task->save();
+        }
+
+        return redirect()->route('tasks.show', $task)
+            ->with('success', 'Task updated successfully!');
     }
 
     /**
      * Delete task
-     * Only manager who created it or admin can delete
      */
     public function destroy(Task $task)
     {
         $user = Auth::user();
         
-        // Employees cannot delete tasks; managers and admins may
-        if ($user->isEmployee()) {
+        if ($user->role === 'employee') {
             abort(403, 'Unauthorized: Only managers can delete tasks');
         }
 
+        if ($user->role === 'manager' && $task->created_by !== $user->id) {
+            abort(403, 'Unauthorized: You can only delete tasks you created');
+        }
+
         $task->delete();
+        
         return redirect()->route('tasks.index')->with('success', 'Task deleted successfully!');
+    }
+
+    /**
+     * My Tasks view for employees
+     */
+    public function myTasks()
+    {
+        $user = Auth::user();
+        
+        if ($user->role !== 'employee') {
+            return redirect()->route('tasks.index');
+        }
+        
+        $tasks = Task::where('assigned_to', $user->id)
+            ->orWhereHas('assignedUsers', function($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
+            ->with(['project', 'creator'])
+            ->latest()
+            ->paginate(10);
+        
+        $stats = [
+            'total' => Task::where('assigned_to', $user->id)
+                ->orWhereHas('assignedUsers', function($q) use ($user) {
+                    $q->where('user_id', $user->id);
+                })->count(),
+            'pending' => Task::where(function($q) use ($user) {
+                    $q->where('assigned_to', $user->id)
+                      ->where('is_completed', false);
+                })->orWhereHas('assignedUsers', function($q) use ($user) {
+                    $q->where('user_id', $user->id)->where('status', 'pending');
+                })->count(),
+            'in_progress' => Task::where(function($q) use ($user) {
+                    $q->where('assigned_to', $user->id)
+                      ->where('status', 'in-progress');
+                })->orWhereHas('assignedUsers', function($q) use ($user) {
+                    $q->where('user_id', $user->id)->where('status', 'in-progress');
+                })->count(),
+            'completed' => Task::where(function($q) use ($user) {
+                    $q->where('assigned_to', $user->id)
+                      ->where('is_completed', true);
+                })->orWhereHas('assignedUsers', function($q) use ($user) {
+                    $q->where('user_id', $user->id)->where('status', 'completed');
+                })->count(),
+        ];
+        
+        return view('tasks.my-tasks', compact('tasks', 'stats'));
     }
 }

@@ -30,7 +30,7 @@
     </head>
     <body>
         <!-- Navigation -->
-        <nav class="navbar navbar-expand-md navbar-dark bg-dark">
+        <nav class="navbar navbar-expand-md navbar-dark bg-dark sticky-top shadow-sm" role="navigation" aria-label="Main navigation">
             <div class="container-fluid">
                 <a class="navbar-brand" href="{{ route('dashboard') }}">
                     📋 {{ config('app.name', 'Task Manager') }}
@@ -41,19 +41,37 @@
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav ms-auto">
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('dashboard') }}">Dashboard</a>
+                            <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}" aria-current="{{ request()->routeIs('dashboard') ? 'page' : '' }}">Dashboard</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('tasks.index') }}">Tasks</a>
+                            <a class="nav-link {{ request()->routeIs('tasks.*') ? 'active' : '' }}" href="{{ route('tasks.index') }}" aria-current="{{ request()->routeIs('tasks.*') ? 'page' : '' }}">Tasks</a>
                         </li>
                         @if(auth()->user()->isManager() || auth()->user()->isAdmin())
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('employees.index') }}">Employees</a>
+                            <a class="nav-link {{ request()->routeIs('employees.*') ? 'active' : '' }}" href="{{ route('employees.index') }}" aria-current="{{ request()->routeIs('employees.*') ? 'page' : '' }}">Employees</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('departments.index') }}">Departments</a>
+                            <a class="nav-link {{ request()->routeIs('departments.*') ? 'active' : '' }}" href="{{ route('departments.index') }}" aria-current="{{ request()->routeIs('departments.*') ? 'page' : '' }}">Departments</a>
                         </li>
                         @endif
+                        
+                        <!-- Search (small) -->
+                        <li class="nav-item d-none d-md-flex align-items-center me-2">
+                            <form class="d-flex" role="search" method="GET" action="{{ route('tasks.index') }}">
+                                <input class="form-control form-control-sm" type="search" name="q" placeholder="Search tasks" aria-label="Search tasks">
+                            </form>
+                        </li>
+
+                        <!-- Notifications -->
+                        <li class="nav-item d-flex align-items-center me-2">
+                            @php $unread = auth()->user()->unreadNotifications()->count() ?? 0; @endphp
+                            <a class="nav-link position-relative" href="{{ route('notifications.index') }}" aria-label="Notifications">
+                                🔔
+                                @if($unread > 0)
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">{{ $unread }}</span>
+                                @endif
+                            </a>
+                        </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
                                 {{ auth()->user()->name }} ({{ ucfirst(auth()->user()->role) }})

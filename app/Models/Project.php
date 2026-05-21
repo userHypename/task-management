@@ -35,6 +35,13 @@ class Project extends Model
         return $this->hasMany(Task::class);
     }
 
+    public function employees()
+    {
+        return $this->belongsToMany(User::class, 'project_employees', 'project_id', 'user_id')
+                    ->withTimestamps()
+                    ->wherePivot('is_active', true);
+    }
+
     // Computed Properties
     public function getCompletionPercentageAttribute(): int
     {
@@ -45,4 +52,19 @@ class Project extends Model
         $completedTasks = $this->tasks()->where('is_completed', true)->count();
         return (int) (($completedTasks / $totalTasks) * 100);
     }
+
+    public function getTaskStatusSummaryAttribute(): array
+    {
+        return [
+            'total' => $this->tasks()->count(),
+            'completed' => $this->tasks()->where('is_completed', true)->count(),
+            'pending' => $this->tasks()->where('is_completed', false)->count(),
+        ];
+    }
+
+    public function isOverdue(): bool
+    {
+        return $this->due_date && $this->due_date->isPast() && $this->status !== 'completed';
+    }
 }
+

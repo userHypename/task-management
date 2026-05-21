@@ -1,79 +1,197 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\Task;
 use App\Models\Project;
-use App\Models\TaskActivity;
+use App\Models\User;
+use App\Models\Department;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        $user = auth()->user();
+        $user = Auth::user();
 
-        if ($user->isEmployee()) {
-            return $this->employeeDashboard($user);
+        if ($user->role === 'admin') {
+            return $this->adminDashboard($user);
         }
 
-        return $this->managerDashboard($user);
+        if ($user->role === 'manager') {
+            return $this->managerDashboard($user);
+        }
+
+        return $this->employeeDashboard($user);
     }
 
-    private function employeeDashboard($user)
+    /**
+     * Admin Dashboard
+     */
+    private function adminDashboard(User $user)
     {
-        // Get tasks assigned to or created by the user
-        $assignedTasks = $user->assignedTasks()->with('project')->latest()->limit(4)->get();
-        $createdTasks = $user->createdTasks()->with('project')->latest()->limit(4)->get();
+        $now = Carbon::now();
+        
+        $totalUsers = User::count();
+        $totalEmployees = User::where('role', 'employee')->count();
+        $totalManagers = User::where('role', 'manager')->count();
+        $totalDepartments = Department::count();
+        
+        $totalTasks = Task::count();
+        $completedTasks = Task::where('is_completed', true)->count();
+        $pendingTasks = Task::where('is_completed', false)->count();
+        $overdueTasks = Task::where('due_date', '<', $now)
+            ->where('is_completed', false)
+            ->count();
+        $highPriorityTasks = Task::where('priority', 'high')
+            ->where('is_completed', false)
+            ->count();
 
         $stats = [
-            'total' => Task::where('assigned_to', $user->id)->orWhere('created_by', $user->id)->count(),
-            'completed' => Task::where('assigned_to', $user->id)->where('is_completed', true)->count(),
-            'pending' => Task::where('assigned_to', $user->id)->where('status', 'pending')->count(),
-            'overdue' => Task::where('assigned_to', $user->id)
-                ->where('due_date', '<', now())
-                ->where('is_completed', false)
-                ->count(),
+            'total_users' => $totalUsers,
+            'total_employees' => $totalEmployees,
+            'total_managers' => $totalManagers,
+            'total_departments' => $totalDepartments,
+            'total_tasks' => $totalTasks,
+            'completed_tasks' => $completedTasks,
+            'pending_tasks' => $pendingTasks,
+            'overdue_tasks' => $overdueTasks,
+            'high_priority' => $highPriorityTasks,
         ];
 
-        return view('dashboard.employee', compact('stats', 'assignedTasks', 'createdTasks'));
+        $departments = Department::withCount('users')->get();
+        
+        // FIXED: Use 'creator' relationship instead of 'user'
+        $recentTasks = Task::with('creator')->latest()->limit(10)->get();
+
+        return view('dashboard.admin', compact('stats', 'departments', 'recentTasks'));
     }
 
-    private function managerDashboard($user)
+    /**
+     * Manager Dashboard
+     */
+    private function managerDashboard(User $user)
     {
-        // Get user's projects and associated tasks
-        if (!$user->isAdmin()) {
-            $projects = Project::where('manager_id', $user->id)->with('tasks')->get();
-        } else {
-            $projects = Project::with('tasks')->get();
-        }
-
-        $activeProjects = $projects->where('status', 'active');
-        $totalProjects = $projects->count();
-
-        // Stats
-        $allTasks = collect();
-        foreach ($projects as $project) {
-            $allTasks = $allTasks->merge($project->tasks);
-        }
-
-        $stats = [
-            'total' => $allTasks->count(),
-            'completed' => $allTasks->where('is_completed', true)->count(),
-            'pending' => $allTasks->where('status', 'pending')->count(),
-            'overdue' => $allTasks->where('status', '!=', 'completed')
-                ->filter(fn($t) => $t->due_date && $t->due_date < now())
-                ->count(),
-            'active_projects' => $activeProjects->count(),
-            'total_projects' => $totalProjects,
-        ];
-
-        // Recent activities
-        $recentActivities = TaskActivity::latest()->limit(10)->with('task', 'user')->get();
-        $recentlyCompleted = Task::where('is_completed', true)
-            ->whereIn('project_id', $projects->pluck('id'))
-            ->latest()
-            ->limit(5)
+        $now = Carbon::now();
+        
+        $teamMembers = User::where('manager_id', $user->id)
+            ->where('role', 'employee')
             ->get();
+        
+        if ($teamMembers->isEmpty() && $user->department_id) {
+            $teamMembers = User::where('department_id', $user->department_id)
+                ->where('role', 'employee')
+                ->get();
+        }
+        
+        $myTasks = Task::where('created_by', $user->id)->get();
+        
+        $departmentTasks = collect();
+        $deptCompleted = 0;
+        $deptPending = 0;
+        
+        if ($user->department_id) {
+            $departmentUserIds = User::where('department_id', $user->department_id)
+                ->where('role', 'employee')
+                ->pluck('id')
+                ->toArray();
+            
+            if (!empty($departmentUserIds)) {
+                $departmentTasks = Task::whereIn('assigned_to', $departmentUserIds)
+                    ->orWhereHas('assignedUsers', function($q) use ($departmentUserIds) {
+                        $q->whereIn('user_id', $departmentUserIds);
+                    })
+                    ->with(['assignedTo', 'creator', 'assignedUsers'])
+                    ->latest()
+                    ->limit(20)
+                    ->get();
+                
+                $deptCompleted = Task::whereIn('assigned_to', $departmentUserIds)
+                    ->where('is_completed', true)
+                    ->count();
+                
+                $deptPending = Task::whereIn('assigned_to', $departmentUserIds)
+                    ->where('is_completed', false)
+                    ->count();
+            }
+        }
+        
+        $totalTasks = $myTasks->count();
+        $completedTasks = $myTasks->where('is_completed', true)->count();
+        $pendingTasks = $myTasks->where('is_completed', false)->count();
+        
+        $overdueTasks = $myTasks->filter(function($task) use ($now) {
+            return $task->due_date && Carbon::parse($task->due_date)->lt($now) && !$task->is_completed;
+        })->count();
+        
+        $activeProjects = Project::where('manager_id', $user->id)
+            ->where('status', 'active')
+            ->count();
+        
+        $stats = [
+            'total_tasks' => $totalTasks,
+            'completed_tasks' => $completedTasks,
+            'pending_tasks' => $pendingTasks,
+            'overdue_tasks' => $overdueTasks,
+            'team_members' => $teamMembers->count(),
+            'active_projects' => $activeProjects,
+            'department_tasks' => $departmentTasks->count(),
+            'dept_completed' => $deptCompleted,
+            'dept_pending' => $deptPending,
+        ];
+        
+        $tasksByStatus = Task::where('created_by', $user->id)
+            ->select('status', DB::raw('count(*) as count'))
+            ->groupBy('status')
+            ->get();
+        
+        return view('dashboard.manager', compact('stats', 'teamMembers', 'departmentTasks', 'tasksByStatus'));
+    }
 
-        return view('dashboard.manager', compact('stats', 'recentActivities', 'recentlyCompleted', 'projects'));
+    /**
+     * Employee Dashboard
+     */
+    private function employeeDashboard(User $user)
+    {
+        $now = Carbon::now();
+        
+        $assignedTasks = Task::where('assigned_to', $user->id)
+            ->orWhereHas('assignedUsers', function($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })
+            ->with(['project', 'creator'])
+            ->latest()
+            ->get();
+        
+        $totalTasks = $assignedTasks->count();
+        $completedTasks = $assignedTasks->where('is_completed', true)->count();
+        $pendingTasks = $assignedTasks->where('is_completed', false)->count();
+        
+        $overdueTasks = $assignedTasks->filter(function($task) use ($now) {
+            return $task->due_date && Carbon::parse($task->due_date)->lt($now) && !$task->is_completed;
+        })->count();
+        
+        $pendingTasksList = $assignedTasks->where('is_completed', false);
+        $highPriority = $pendingTasksList->where('priority', 'high')->count();
+        $mediumPriority = $pendingTasksList->where('priority', 'medium')->count();
+        $lowPriority = $pendingTasksList->where('priority', 'low')->count();
+        
+        $stats = [
+            'total_tasks' => $totalTasks,
+            'completed_tasks' => $completedTasks,
+            'pending_tasks' => $pendingTasks,
+            'overdue_tasks' => $overdueTasks,
+            'high_priority' => $highPriority,
+            'medium_priority' => $mediumPriority,
+            'low_priority' => $lowPriority,
+        ];
+        
+        $myTasks = $assignedTasks->sortBy(function($task) {
+            return $task->is_completed ? 1 : 0;
+        })->sortBy('due_date')->take(10);
+        
+        return view('dashboard.employee', compact('stats', 'myTasks'));
     }
 }

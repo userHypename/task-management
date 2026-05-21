@@ -10,15 +10,20 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-{
-    Schema::create('departments', function (Blueprint $table) {
-        $table->id();
-        $table->string('name', 100)->unique();
-        $table->text('description')->nullable();
-        $table->unsignedInteger('employee_count')->default(0);
-        $table->timestamps();
-    });
-}
+    {
+        // Skip if table already exists (duplicate migration)
+        if (Schema::hasTable('departments')) {
+            return;
+        }
+        
+        Schema::create('departments', function (Blueprint $table) {
+            $table->id();
+            $table->string('name', 100)->unique();
+            $table->text('description')->nullable();
+            $table->unsignedInteger('employee_count')->default(0);
+            $table->timestamps();
+        });
+    }
 
 
     /**

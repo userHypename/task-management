@@ -21,16 +21,18 @@ class Task extends Model
         'due_date',
         'is_completed',
         'kanban_order',
-        'user_id',
+        // 'user_id' => REMOVED - column doesn't exist in database
     ];
 
     protected $casts = [
         'due_date' => 'date',
         'is_completed' => 'boolean',
-        'start_date' => 'date',
     ];
 
-    // Relationships
+    protected $appends = ['assigned_users_count', 'progress'];
+
+    // ========== RELATIONSHIPS ==========
+    
     public function project()
     {
         return $this->belongsTo(Project::class);
@@ -46,6 +48,18 @@ class Task extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function assignedUsers()
+    {
+        return $this->belongsToMany(User::class, 'task_assignments', 'task_id', 'user_id')
+                    ->withPivot('status', 'completion_notes', 'submission_files', 'started_at', 'completed_at')
+                    ->withTimestamps();
+    }
+
+    public function assignments()
+    {
+        return $this->hasMany(TaskAssignment::class);
+    }
+
     public function comments()
     {
         return $this->hasMany(TaskComment::class);
@@ -56,24 +70,45 @@ class Task extends Model
         return $this->hasMany(TaskActivity::class)->orderByDesc('created_at');
     }
 
-    // Keep old relationship for backward compatibility
-    public function user()
+    public function submissions()
     {
-        return $this->belongsTo(User::class);
+        return $this->hasMany(TaskSubmission::class);
     }
 
-    // Computed Properties
+    public function notifications()
+    {
+        return $this->morphMany(Notification::class, 'notifiable');
+    }
+
+    // ========== COMPUTED PROPERTIES ==========
+    
     public function getIsOverdueAttribute(): bool
     {
-        return $this->due_date < Carbon::today() && !$this->is_completed;
+        return $this->due_date && Carbon::parse($this->due_date)->isPast() && !$this->is_completed;
     }
 
     public function getDaysUntilDueAttribute(): int
     {
+        if (!$this->due_date) return 0;
         return Carbon::now()->diffInDays($this->due_date, false);
     }
 
-    // Scopes for filtering
+    public function getAssignedUsersCountAttribute(): int
+    {
+        return $this->assignedUsers()->count();
+    }
+
+    public function getProgressAttribute(): int
+    {
+        $total = $this->assignedUsers()->count();
+        if ($total === 0) return 0;
+        
+        $completed = $this->assignedUsers()->wherePivot('status', 'completed')->count();
+        return round(($completed / $total) * 100);
+    }
+
+    // ========== SCOPES ==========
+    
     public function scopeCompleted($query)
     {
         return $query->where('is_completed', true);
@@ -102,5 +137,17 @@ class Task extends Model
     public function scopeForUser($query, $userId)
     {
         return $query->where('assigned_to', $userId)->orWhere('created_by', $userId);
+    }
+
+    public function scopeForEmployee($query, $employeeId)
+    {
+        return $query->whereHas('assignedUsers', function($q) use ($employeeId) {
+            $q->where('user_id', $employeeId);
+        });
+    }
+
+    public function scopeForManager($query, $managerId)
+    {
+        return $query->where('created_by', $managerId);
     }
 }

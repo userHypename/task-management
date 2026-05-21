@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -11,41 +10,27 @@ use Illuminate\Support\Facades\Hash;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'name',
         'email',
         'password',
         'role',
         'department_id',
+        'manager_id',
+        'account_status',
         'position',
         'avatar',
         'phone',
         'bio',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -54,10 +39,21 @@ class User extends Authenticatable
         ];
     }
 
-    // Relationships
+    // ========== RELATIONSHIPS ==========
+    
     public function department()
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function manager()
+    {
+        return $this->belongsTo(User::class, 'manager_id');
+    }
+
+    public function managedEmployees()
+    {
+        return $this->hasMany(User::class, 'manager_id');
     }
 
     public function assignedTasks()
@@ -68,6 +64,18 @@ class User extends Authenticatable
     public function createdTasks()
     {
         return $this->hasMany(Task::class, 'created_by');
+    }
+
+    public function taskAssignments()
+    {
+        return $this->hasMany(TaskAssignment::class);
+    }
+
+    public function assignedToManyTasks()
+    {
+        return $this->belongsToMany(Task::class, 'task_assignments', 'user_id', 'task_id')
+                    ->withPivot('status', 'completion_notes', 'submission_files', 'started_at', 'completed_at')
+                    ->withTimestamps();
     }
 
     public function projects()
@@ -85,6 +93,16 @@ class User extends Authenticatable
         return $this->hasMany(TaskActivity::class);
     }
 
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    public function taskSubmissions()
+    {
+        return $this->hasMany(TaskSubmission::class);
+    }
+
     public function tasks()
     {
         return $this->hasMany(Task::class);
@@ -95,25 +113,30 @@ class User extends Authenticatable
         return $this->hasOne(Employee::class);
     }
 
-    // Helper methods
-    public function isAdmin()
+    // ========== ROLE HELPERS ==========
+    
+    public function isAdmin(): bool
     {
         return $this->role === 'admin';
     }
 
-    public function isManager()
+    public function isManager(): bool
     {
         return $this->role === 'manager';
     }
 
-    public function isEmployee()
+    public function isEmployee(): bool
     {
-        return !$this->isAdmin() && !$this->isManager();
+        return $this->role === 'employee';
     }
 
-    /**
-     * Ensure plain passwords are hashed before saving (defensive).
-     */
+    public function isActive(): bool
+    {
+        return $this->account_status === 'active';
+    }
+
+    // ========== ACCESSORS ==========
+    
     protected function setPasswordAttribute($value)
     {
         if (empty($value)) {
@@ -121,11 +144,20 @@ class User extends Authenticatable
             return;
         }
 
-        // If the value is already a valid hash for the current algorithm,
-        // keep it. Otherwise, hash plaintext.
         $this->attributes['password'] = Hash::needsRehash($value)
             ? Hash::make($value)
             : $value;
     }
 
+    // ========== SCOPES ==========
+    
+    public function scopeActive($query)
+    {
+        return $query->where('account_status', 'active');
+    }
+
+    public function scopeByRole($query, $role)
+    {
+        return $query->where('role', $role);
+    }
 }
