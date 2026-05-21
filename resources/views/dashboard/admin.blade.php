@@ -1,250 +1,208 @@
 @extends('layouts.app')
 
 @section('title', 'Admin Dashboard')
+@section('header-title', 'Dashboard')
 
 @section('content')
-    {{-- Page Header --}}
-    <div class="mb-8">
-        <h1 class="text-2xl font-medium text-gray-900 dark:text-white">Admin dashboard</h1>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Welcome back — here's your system overview.</p>
+<div class="space-y-8">
+    <!-- Welcome Section -->
+    <div class="mb-2">
+        <h2 class="text-2xl font-semibold text-gray-800 dark:text-white">Welcome back, {{ auth()->user()->name }}!</h2>
+        <p class="text-gray-500 dark:text-gray-400 mt-1">Here's what's happening with your platform today.</p>
     </div>
 
-    {{-- ── System Overview ── --}}
-    <p class="text-xs font-medium uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">System overview</p>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
-
-        {{-- Total Users --}}
-        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-5">
-            <div class="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/40 flex items-center justify-center mb-4">
-                <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M15 7a3 3 0 11-6 0 3 3 0 016 0zM21 10a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                </svg>
-            </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Total users</p>
-            <p class="text-3xl font-medium text-gray-900 dark:text-white">{{ $stats['total_users'] ?? 0 }}</p>
-            <p class="text-xs text-gray-400 dark:text-gray-500 mt-2">
-                {{ $stats['total_employees'] ?? 0 }} employees · {{ $stats['total_managers'] ?? 0 }} managers
-            </p>
-        </div>
-
-        {{-- Departments --}}
-        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-5">
-            <div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/40 flex items-center justify-center mb-4">
-                <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                </svg>
-            </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Departments</p>
-            <p class="text-3xl font-medium text-gray-900 dark:text-white">{{ $stats['total_departments'] ?? 0 }}</p>
-            <p class="text-xs text-gray-400 dark:text-gray-500 mt-2">Active teams</p>
-        </div>
-
-        {{-- Employees --}}
-        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-5">
-            <div class="w-8 h-8 rounded-lg bg-violet-50 dark:bg-violet-900/40 flex items-center justify-center mb-4">
-                <svg class="w-4 h-4 text-violet-600 dark:text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                </svg>
-            </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Employees</p>
-            <p class="text-3xl font-medium text-gray-900 dark:text-white">{{ $stats['total_employees'] ?? 0 }}</p>
-            <p class="text-xs text-gray-400 dark:text-gray-500 mt-2">Across all departments</p>
-        </div>
-
-        {{-- Total Tasks --}}
-        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-5">
-            <div class="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-900/40 flex items-center justify-center mb-4">
-                <svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-                </svg>
-            </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Total tasks</p>
-            <p class="text-3xl font-medium text-gray-900 dark:text-white">{{ $stats['total_tasks'] ?? 0 }}</p>
-            <p class="text-xs text-gray-400 dark:text-gray-500 mt-2">All-time task count</p>
-        </div>
-    </div>
-
-    {{-- ── Task Statistics ── --}}
-    <p class="text-xs font-medium uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">Task statistics</p>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
-
-        @php
-            $total         = $stats['total_tasks'] ?? 1;
-            $completePct   = $total > 0 ? round((($stats['completed_tasks'] ?? 0) / $total) * 100) : 0;
-            $pendingPct    = $total > 0 ? round((($stats['pending_tasks']   ?? 0) / $total) * 100) : 0;
-        @endphp
-
-        {{-- Completed --}}
-        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-5">
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Completed</p>
-            <p class="text-3xl font-medium text-emerald-600 dark:text-emerald-400">{{ $stats['completed_tasks'] ?? 0 }}</p>
-            <div class="mt-3 h-1 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
-                <div class="h-full rounded-full bg-emerald-500" style="width: {{ $completePct }}%"></div>
-            </div>
-            <span class="inline-flex items-center gap-1 mt-2 text-xs font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/40 px-2 py-0.5 rounded-full">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                {{ $completePct }}% of total
-            </span>
-        </div>
-
-        {{-- Pending --}}
-        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-5">
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Pending</p>
-            <p class="text-3xl font-medium text-amber-600 dark:text-amber-400">{{ $stats['pending_tasks'] ?? 0 }}</p>
-            <div class="mt-3 h-1 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
-                <div class="h-full rounded-full bg-amber-400" style="width: {{ $pendingPct }}%"></div>
-            </div>
-            <span class="inline-flex items-center gap-1 mt-2 text-xs font-medium text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/40 px-2 py-0.5 rounded-full">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                {{ $pendingPct }}% of total
-            </span>
-        </div>
-
-        {{-- Overdue --}}
-        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-5">
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Overdue</p>
-            <p class="text-3xl font-medium text-red-600 dark:text-red-400">{{ $stats['overdue_tasks'] ?? 0 }}</p>
-            <div class="mt-3 h-1 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
-                <div class="h-full rounded-full bg-red-500" style="width: 100%"></div>
-            </div>
-            <span class="inline-flex items-center gap-1 mt-2 text-xs font-medium text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/40 px-2 py-0.5 rounded-full">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
-                Requires attention
-            </span>
-        </div>
-
-        {{-- High Priority --}}
-        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-5">
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">High priority</p>
-            <p class="text-3xl font-medium text-red-600 dark:text-red-400">{{ $stats['high_priority'] ?? 0 }}</p>
-            <div class="mt-3 h-1 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
-                <div class="h-full rounded-full bg-orange-500" style="width: 100%"></div>
-            </div>
-            <span class="inline-flex items-center gap-1 mt-2 text-xs font-medium text-orange-700 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/40 px-2 py-0.5 rounded-full">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                Urgent tasks
-            </span>
-        </div>
-    </div>
-
-    {{-- ── Department Overview ── --}}
-    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden mb-8">
-        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
-            <h2 class="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-2">
-                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16"/>
-                </svg>
-                Department overview
-            </h2>
-            <a href="{{ route('departments.index') }}" class="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 flex items-center gap-1 transition-colors">
-                View all
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-            </a>
-        </div>
-        <table class="w-full text-sm">
-            <thead>
-                <tr class="bg-gray-50 dark:bg-gray-700/50">
-                    <th class="px-5 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Department</th>
-                    <th class="px-5 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Employees</th>
-                    <th class="px-5 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Created</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($departments as $dept)
-                    <tr class="border-t border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-                        <td class="px-5 py-3.5 text-gray-900 dark:text-white font-medium">{{ $dept->name }}</td>
-                        <td class="px-5 py-3.5">
-                            <span class="inline-flex items-center gap-1 text-xs font-medium text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/40 px-2.5 py-1 rounded-full">
-                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                                {{ $dept->users_count ?? 0 }}
-                            </span>
-                        </td>
-                        <td class="px-5 py-3.5 text-xs text-gray-400 dark:text-gray-500">
-                            {{ $dept->created_at ? $dept->created_at->format('M d, Y') : '—' }}
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="3" class="px-5 py-10 text-center text-sm text-gray-400 dark:text-gray-500">No departments found</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-
-    {{-- ── Recent Tasks ── --}}
-    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden mb-8">
-        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
-            <h2 class="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-2">
-                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                </svg>
-                Recent tasks
-            </h2>
-            <a href="{{ route('tasks.create') }}" class="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 flex items-center gap-1 transition-colors">
-                View all
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-            </a>
-        </div>
-
-        @forelse($recentTasks as $task)
-            <div class="flex items-center justify-between px-5 py-4 border-t border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors first:border-t-0">
-                <div class="flex-1 min-w-0 mr-4">
-                    <a href="{{ route('tasks.show', $task) }}" class="text-sm font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors truncate block">
-                        {{ $task->title }}
-                    </a>
-                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5 flex items-center gap-1">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                        {{ $task->creator->name ?? 'Unknown' }}
-                    </p>
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <!-- Total Users -->
+        <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 transition-all hover:shadow-md">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Users</p>
+                    <p class="text-3xl font-bold text-gray-800 dark:text-white mt-1">{{ $stats['total_users'] ?? 0 }}</p>
                 </div>
-
-                @if($task->is_completed)
-                    <span class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 shrink-0">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                        Completed
-                    </span>
-                @else
-                    @if($task->priority === 'urgent')
-                        <span class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-red-600 text-white shrink-0">
-                            <span class="w-1.5 h-1.5 rounded-full bg-white opacity-80"></span>Urgent
-                        </span>
-                    @elseif($task->priority === 'high')
-                        <span class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-red-50 dark:bg-red-900/40 text-red-700 dark:text-red-400 shrink-0">
-                            <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>High
-                        </span>
-                    @elseif($task->priority === 'medium')
-                        <span class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 shrink-0">
-                            <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>Medium
-                        </span>
-                    @else
-                        <span class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 shrink-0">
-                            <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>Low
-                        </span>
-                    @endif
-                @endif
+                <div class="w-10 h-10 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
+                    <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 12H9m6 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
             </div>
-        @empty
-            <div class="px-5 py-10 text-center text-sm text-gray-400 dark:text-gray-500">No tasks yet</div>
-        @endforelse
+            <div class="mt-3 text-xs text-gray-400 dark:text-gray-500">
+                {{ $stats['total_employees'] ?? 0 }} employees · {{ $stats['total_managers'] ?? 0 }} managers
+            </div>
+        </div>
+
+        <!-- Departments -->
+        <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 transition-all hover:shadow-md">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Departments</p>
+                    <p class="text-3xl font-bold text-gray-800 dark:text-white mt-1">{{ $stats['total_departments'] ?? 0 }}</p>
+                </div>
+                <div class="w-10 h-10 bg-green-50 dark:bg-green-900/30 rounded-xl flex items-center justify-center">
+                    <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5.581m0 0H9m5.581 0a2 2 0 100-4 2 2 0 000 4z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Tasks -->
+        <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 transition-all hover:shadow-md">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Tasks</p>
+                    <p class="text-3xl font-bold text-gray-800 dark:text-white mt-1">{{ $stats['total_tasks'] ?? 0 }}</p>
+                </div>
+                <div class="w-10 h-10 bg-purple-50 dark:bg-purple-900/30 rounded-xl flex items-center justify-center">
+                    <svg class="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="mt-3">
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-green-600 dark:text-green-400">Completed: {{ $stats['completed_tasks'] ?? 0 }}</span>
+                    <span class="text-yellow-600 dark:text-yellow-400">Pending: {{ $stats['pending_tasks'] ?? 0 }}</span>
+                </div>
+                <div class="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5">
+                    @php 
+                        $total = ($stats['total_tasks'] ?? 0);
+                        $completed = ($stats['completed_tasks'] ?? 0);
+                        $completePercent = $total > 0 ? round(($completed / $total) * 100) : 0; 
+                    @endphp
+                    <div class="bg-green-500 h-1.5 rounded-full transition-all duration-300" style="width: {{ $completePercent }}%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overdue Tasks -->
+        <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 transition-all hover:shadow-md">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Overdue Tasks</p>
+                    <p class="text-3xl font-bold text-red-600 dark:text-red-400 mt-1">{{ $stats['overdue_tasks'] ?? 0 }}</p>
+                </div>
+                <div class="w-10 h-10 bg-red-50 dark:bg-red-900/30 rounded-xl flex items-center justify-center">
+                    <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4v2m0 4v2M7 9h10a2 2 0 012 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2V11a2 2 0 012-2z"/>
+                    </svg>
+                </div>
+            </div>
+            <p class="text-xs text-red-600 dark:text-red-400 mt-3 font-medium">Requires attention</p>
+        </div>
     </div>
 
-    {{-- ── Quick Actions ── --}}
-    <div class="flex flex-wrap gap-2">
-        <a href="{{ route('tasks.create') }}"
-           class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            Create task
+    <!-- High Priority Tasks Section -->
+    @if(isset($stats['high_priority']) && $stats['high_priority'] > 0)
+    <div>
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-800 dark:text-white">High Priority Tasks</h3>
+            <span class="text-sm text-red-600 dark:text-red-400">{{ $stats['high_priority'] }} tasks</span>
+        </div>
+        <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+            <div class="divide-y divide-gray-100 dark:divide-gray-800">
+                @foreach($recentTasks->where('priority', 'high')->take(5) as $task)
+                <div class="px-5 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                    <div class="flex-1">
+                        <a href="{{ route('tasks.show', $task) }}" class="font-medium text-gray-800 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                            {{ $task->title }}
+                        </a>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Created by {{ $task->creator->name ?? 'Unknown' }}</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">High</span>
+                        @if($task->is_completed)
+                            <span class="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Done</span>
+                        @endif
+                    </div>
+                </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+    @endif
+
+    <!-- Recent Tasks Section -->
+    <div>
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Recent Tasks</h3>
+            <a href="{{ route('tasks.index') }}" class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">View all →</a>
+        </div>
+        <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+            @if(isset($recentTasks) && $recentTasks->count() > 0)
+                <div class="divide-y divide-gray-100 dark:divide-gray-800">
+                    @foreach($recentTasks as $task)
+                    <div class="px-5 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                        <div class="flex-1">
+                            <a href="{{ route('tasks.show', $task) }}" class="font-medium text-gray-800 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                                {{ $task->title }}
+                            </a>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                                Created by {{ $task->creator->name ?? 'Unknown' }}
+                                @if($task->project)
+                                    · Project: {{ $task->project->name }}
+                                @endif
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <!-- Priority Badge -->
+                            @if($task->priority === 'urgent')
+                                <span class="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Urgent</span>
+                            @elseif($task->priority === 'high')
+                                <span class="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">High</span>
+                            @elseif($task->priority === 'medium')
+                                <span class="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">Medium</span>
+                            @else
+                                <span class="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Low</span>
+                            @endif
+                            
+                            <!-- Status Badge -->
+                            @if($task->is_completed)
+                                <span class="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Done</span>
+                            @elseif($task->status === 'in-progress')
+                                <span class="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">In Progress</span>
+                            @elseif($task->status === 'on-hold')
+                                <span class="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">On Hold</span>
+                            @else
+                                <span class="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400">Pending</span>
+                            @endif
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="px-5 py-12 text-center">
+                    <div class="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <svg class="w-8 h-8 text-gray-400 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                    </div>
+                    <p class="text-gray-500 dark:text-gray-400">No tasks yet</p>
+                </div>
+            @endif
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="flex flex-wrap gap-3 pt-4">
+        <a href="{{ route('tasks.create') }}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Create New Task
         </a>
-        <a href="{{ route('users.index') }}"
-           class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-            Manage users
+        <a href="{{ route('users.index') }}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 12H9m6 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Manage Users
         </a>
-        <a href="{{ route('departments.index') }}"
-           class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16"/></svg>
-            Manage departments
+        <a href="{{ route('departments.index') }}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5.581m0 0H9m5.581 0a2 2 0 100-4 2 2 0 000 4z"/>
+            </svg>
+            Manage Departments
         </a>
     </div>
+</div>
 @endsection
